@@ -299,6 +299,54 @@ export class AnalizadorSemantico {
         }
     }
 
+    // LiteralArray → “[“ ListaElementos “]”
+    manejarLiteralArray(nodo) {
+     
+        if (nodo.hijos[1]) {
+            this.manejarListaElementos(nodo.hijos[1]);
+            nodo.token.tipoDato = nodo.hijos[1].token.tipoDato;
+        } else {
+            nodo.token.tipoDato = 'Array';
+        }
+
+    }
+
+    // ListaElementos → ExpArit ListaElementosPrima
+    manejarListaElementos(nodo) {
+
+        this.manejarExpArit(nodo.hijos[0]);
+        nodo.token.tipoDato = nodo.hijos[0].token.tipoDato;
+
+        if (nodo.hijos[1]) {
+            this.manejarListaElementosPrima(nodo.hijos[1]);
+        } else {
+            return;
+        }
+
+        if (nodo.token.tipoDato !== nodo.hijos[1].token.tipoDato) {
+            this.#errores.push(`Error. Los tipos de los elementos del array deben ser iguales.`);
+        }
+
+    }
+
+    // ListaElementosPrima → “,” ExpArit ListaElementosPrima | ε 
+    manejarListaElementosPrima(nodo) {
+        if (nodo.hijos.length === 0) return;
+
+        this.manejarExpArit(nodo.hijos[1]);
+        nodo.token.tipoDato = nodo.hijos[1].token.tipoDato;
+
+        if (nodo.hijos[2]) {
+            this.manejarListaElementosPrima(nodo.hijos[2]);
+        } else {
+            return;
+        }
+
+        if (nodo.token.tipoDato !== nodo.hijos[2].token.tipoDato) {
+            this.#errores.push(`Error. Los tipos de los elementos del array deben ser iguales.`);
+        }
+    }
+
     // Variable → “id” AccesoArreglo
    manejarVariable(nodo) {
         const lexema = nodo.hijos[0].token.lexema;
