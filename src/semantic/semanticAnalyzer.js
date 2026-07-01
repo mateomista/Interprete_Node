@@ -545,12 +545,11 @@ let analizadorSintactico = new Parser();
 const arbol = analizadorSintactico.parsear();
 
 let analizadorSemantico = new AnalizadorSemantico(arbol);
-
 analizadorSemantico.analizar();
 
-if (arbol) {
-    const tablaSimbolos = new TablaDeSimbolosSemantica();
-    analizarSemantica(arbol.root, tablaSimbolos);
-} 
-
-arbol.imprimirArbol();
+console.log("--- RESULTADOS DEL ANÁLISIS SEMÁNTICO ---");
+if (analizadorSemantico.errores && analizadorSemantico.errores.length > 0) {
+    analizadorSemantico.reportarErrores();
+} else {
+    console.log("¡Análisis semántico exitoso! Cero errores detectados.");
+}

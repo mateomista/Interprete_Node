@@ -44,7 +44,7 @@ export function esConstanteEntera(fuente, pos) {
         } else if (estadoActual === Q.q3) {
             // Estado de aceptación
             return {
-                token: new Token('Int', lexema),
+                token: new Token('cteReal', lexema),
                 nuevaPos: i
             };
         } else {

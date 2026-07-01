@@ -65,7 +65,7 @@ export class AnalizadorLexico {
     }
 
     // Token fin de archivo
-    this.#tablaDeSimbolos.agregar(new Token('$', 'fin de archivo'));
+    this.#tablaDeSimbolos.agregar(new Token('$', '$'));
   }
 
   primerToken() {

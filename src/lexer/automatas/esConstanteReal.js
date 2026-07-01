@@ -59,7 +59,7 @@ export function esConstanteReal(fuente, pos) {
         } else if (estadoActual === Q.q7) {
 
             return {
-                token: new Token('Real', lexema),
+                token: new Token('cteReal', lexema),
                 nuevaPos: i
             };
 

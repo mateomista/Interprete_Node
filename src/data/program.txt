@@ -1,12 +1,11 @@
 Program id; 
 
-var1 : Int;
-var2 : Real;
-var3 : Real[];
+var1 : Real;
+var3 : Real[54];
 
 {
 
-    for ( i := 1 ; x < var2 ; i := -1.04342444  ) { 
+    for ( i := 1 ; x < var2 ) { 
 
         var3[3] := var2;
 

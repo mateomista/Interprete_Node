@@ -47,66 +47,58 @@ export class Parser {
     parsear() {
         
         const nodoRaiz = this.#arbol.root;
-        this.#pila.push(new TokenPila('$', 'Fin de archivo', true))
+        this.#pila.push(new TokenPila('$', '$', true))
         this.#pila.push(new TokenPila('Programa', 'Programa', false));
         this.#pilaNodos.push(new NodoArbol('$', true)); // Nodo terminal '$'
         this.#pilaNodos.push(nodoRaiz);                // Nodo raíz del árbol
 
         let siguienteCompLexico = this.#analizadorLexico.siguienteToken();
         let error = false;
-        let topePila = this.#pila.pop();
-        console.log(topePila.valor);
-        let topePilaNodos = this.#pilaNodos.pop();
+        let estado = 'en proceso';
+        let topePila;
+        let topePilaNodos;
 
-        while(!error && !this.#pila.isEmpty()){
+        while(estado === 'en proceso') {
+
+
+            topePila = this.#pila.pop();
+            topePilaNodos = this.#pilaNodos.pop();
             
-            if (topePila.esTerminal) {
-                console.log(topePila.valor)
-                if (siguienteCompLexico.tipo === 'Real' || siguienteCompLexico.tipo === 'Int' ) {
-                    if (topePila.valor === siguienteCompLexico.tipo ) { 
-                        siguienteCompLexico = this.#analizadorLexico.siguienteToken();
-                        topePila = this.#pila.pop();
-                        topePilaNodos = this.#pilaNodos.pop();
-                        continue;
-                    }   
-                } else
-                if (siguienteCompLexico.tipo === 'id' || siguienteCompLexico.tipo === 'opRel') {
-                    if (topePila.valor === siguienteCompLexico.tipo ) { 
-                        siguienteCompLexico = this.#analizadorLexico.siguienteToken();
-                        topePila = this.#pila.pop();
-                        topePilaNodos = this.#pilaNodos.pop();
-                        continue;
-                    }   
-                } else if (topePila.valor === siguienteCompLexico.valor) { 
+            if (topePila.tipo === '$' && siguienteCompLexico.tipo === '$') {
+                estado = 'exito';
+            }
+
+             else if (topePila.esTerminal) {
+
+                console.log(topePila.tipo)
+
+                if (topePila.tipo === siguienteCompLexico.tipo) { 
                     siguienteCompLexico = this.#analizadorLexico.siguienteToken();
-                    topePila = this.#pila.pop();
-                    topePilaNodos = this.#pilaNodos.pop();
-                    continue;
                 } else {
-                    console.log(`Error, se esperaba ${topePila.valor}, se encontro ${siguienteCompLexico.valor}`)
-                    error = true;
+                    console.log(`1 Error, se esperaba ${topePila.tipo}, se encontro ${siguienteCompLexico.tipo}`)
+                    estado = 'error';
                 }
 
-            } else if (!topePila.esTerminal) {
+            } else {
                 let produccion
-                console.log('Tope de la pila de simbolos: ',topePila.valor);
+                console.log('Tope de la pila de simbolos: ',topePila.tipo);
                 console.log('Tipo Tope de la pila de simbolos: ',topePila.tipo);
-                console.log('Siguiente comp lexico: ', siguienteCompLexico.valor)
+                console.log('Siguiente comp lexico: ', siguienteCompLexico.tipo)
                 console.log('Tipo componente lex ', siguienteCompLexico.tipo)
-                if (siguienteCompLexico.tipo === 'Real' || siguienteCompLexico.tipo === 'Int' ) {
-                    produccion = this.#tas.getValueAt('__EMPTY', topePila.valor, siguienteCompLexico.tipo)
-                } else if (siguienteCompLexico.tipo === 'id' || siguienteCompLexico.tipo === 'opRel') { // ver opRel
-                     produccion = this.#tas.getValueAt('__EMPTY', topePila.valor, siguienteCompLexico.tipo)
-                } else { produccion = this.#tas.getValueAt('__EMPTY', topePila.valor, siguienteCompLexico.valor)}
+
+                if (siguienteCompLexico.tipo === 'cteReal' || siguienteCompLexico.tipo === 'Int' ) {
+                    produccion = this.#tas.getValueAt('__EMPTY', topePila.tipo, siguienteCompLexico.tipo)
+                } else if (siguienteCompLexico.tipo === 'id' || siguienteCompLexico.tipo === 'opRel') {
+                     produccion = this.#tas.getValueAt('__EMPTY', topePila.tipo, siguienteCompLexico.tipo)
+                } else { produccion = this.#tas.getValueAt('__EMPTY', topePila.tipo, siguienteCompLexico.tipo)}
                 
-                console.log(`Producción para (${topePila.valor}, ${siguienteCompLexico.valor}):`, produccion);
+                console.log(`Producción para (${topePila.tipo}, ${siguienteCompLexico.tipo}):`, produccion);
                 if (!produccion) {
-                    console.error(`Error, ${siguienteCompLexico.valor}, no es alcanzable desde ${topePila.valor}`)
-                } else if (produccion.trim() === 'ε') {
-                    topePila = this.#pila.pop();
-                    topePilaNodos = this.#pilaNodos.pop();
-                    continue;
-                } else {
+                    console.error(`Error, ${siguienteCompLexico.tipo}, no es alcanzable desde ${topePila.tipo}`)
+                    estado = 'error';
+                   
+                } else if (produccion.trim() !== 'ε') {
+                    console.log('apilando')
                     const nodosHijos = [];
                     const simbolos = produccion.trim().split(/\s+/);
                     for (const simbolo of simbolos) {
@@ -130,16 +122,12 @@ export class Parser {
                     
                 }
             }
-            console.log('desapilo')
-            topePila = this.#pila.pop();
-            topePilaNodos = this.#pilaNodos.pop();
-
         }
 
-        if (!error && this.#pila.isEmpty()) {
+        if (estado === 'exito') {
             console.log('Análisis exitoso');
             return this.#arbol;
-        } else if (error) {
+        } else if (estado === 'error') {
             console.log('Análisis con errores');
             return null;
         }
