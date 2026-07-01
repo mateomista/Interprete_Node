@@ -2,7 +2,7 @@ import { AnalizadorLexico } from './lexer.js';
 import { TablaDeSimbolos } from './tablaDeSimbolos.js';
 import fs from 'node:fs';
 
-const filePath = '../src/data/program.txt';
+const filePath = './data/program.txt';
 
 function cargarFuente() {
     try {
@@ -15,7 +15,7 @@ function cargarFuente() {
 }
 
 const fuente = cargarFuente();
-
+const lexer = new AnalizadorLexico(fuente);
 
 let pos = 0;
 let contiene = false;

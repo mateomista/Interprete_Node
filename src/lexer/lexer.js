@@ -4,7 +4,7 @@ import { Token } from './token.js';
 import { esEspacioOControl } from './utils.js';
 import fs from 'node:fs';
 
-const filePath = './src/data/program.txt';
+const filePath = '../data/program.txt';
 
 function cargarFuente() {
     try {
@@ -82,7 +82,6 @@ export class AnalizadorLexico {
 
 
   getTablaDeSimbolos() {
-    // Si quieres exponer la tabla completa (cuidado con la mutabilidad)
     return this.#tablaDeSimbolos;
   }
 }
