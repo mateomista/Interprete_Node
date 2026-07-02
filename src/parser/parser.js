@@ -69,28 +69,27 @@ export class Parser {
             }
 
              else if (topePila.esTerminal) {
+                console.log("Haciendo match de terminal:", topePila.tipo);
 
-                console.log(topePila.tipo)
+                    if (topePila.tipo === siguienteCompLexico.tipo) { 
 
-                if (topePila.tipo === siguienteCompLexico.tipo) { 
-                    siguienteCompLexico = this.#analizadorLexico.siguienteToken();
-                } else {
-                    console.log(`1 Error, se esperaba ${topePila.tipo}, se encontro ${siguienteCompLexico.tipo}`)
-                    estado = 'error';
-                }
+                        if (topePilaNodos) {
+                            topePilaNodos.token = siguienteCompLexico; 
+                        }
 
-            } else {
+                        siguienteCompLexico = this.#analizadorLexico.siguienteToken();
+                    } else {
+                        console.log(`1 Error, se esperaba ${topePila.tipo}, se encontro ${siguienteCompLexico.tipo}`)
+                        estado = 'error';
+                    }
+                }               else {
                 let produccion
                 console.log('Tope de la pila de simbolos: ',topePila.tipo);
                 console.log('Tipo Tope de la pila de simbolos: ',topePila.tipo);
                 console.log('Siguiente comp lexico: ', siguienteCompLexico.tipo)
                 console.log('Tipo componente lex ', siguienteCompLexico.tipo)
 
-                if (siguienteCompLexico.tipo === 'cteReal' || siguienteCompLexico.tipo === 'Int' ) {
-                    produccion = this.#tas.getValueAt('__EMPTY', topePila.tipo, siguienteCompLexico.tipo)
-                } else if (siguienteCompLexico.tipo === 'id' || siguienteCompLexico.tipo === 'opRel') {
-                     produccion = this.#tas.getValueAt('__EMPTY', topePila.tipo, siguienteCompLexico.tipo)
-                } else { produccion = this.#tas.getValueAt('__EMPTY', topePila.tipo, siguienteCompLexico.tipo)}
+                produccion = this.#tas.getValueAt('__EMPTY', topePila.tipo, siguienteCompLexico.tipo);
                 
                 console.log(`Producción para (${topePila.tipo}, ${siguienteCompLexico.tipo}):`, produccion);
                 if (!produccion) {
@@ -99,17 +98,19 @@ export class Parser {
                    
                 } else if (produccion.trim() !== 'ε') {
                     console.log('apilando')
+                    
                     const nodosHijos = [];
                     const simbolos = produccion.trim().split(/\s+/);
+                    
                     for (const simbolo of simbolos) {
-                        
                         const esTerminal = !this.#noTerminales.includes(simbolo);
-                        const tokenAsociado = new TokenSemantico(siguienteCompLexico.tipo, siguienteCompLexico.valor);
-                        const nodoHijo = new NodoArbol(simbolo, esTerminal, tokenAsociado);
+                        const nodoHijo = new NodoArbol(simbolo, esTerminal, null);
+                        
                         topePilaNodos.agregarHijo(nodoHijo);
                         nodosHijos.push(nodoHijo);
-                        
                     }
+                    
+                    // El resto de los for de apilamiento se quedan exactamente igual...
                     for (let i = simbolos.length - 1; i >= 0; i--) {
                         const palabra = simbolos[i];
                         const esTerminal = !this.#noTerminales.includes(palabra);
@@ -119,7 +120,6 @@ export class Parser {
                     for (let i = nodosHijos.length - 1; i >= 0; i--) {
                         this.#pilaNodos.push(nodosHijos[i]);
                     }
-                    
                 }
             }
         }
