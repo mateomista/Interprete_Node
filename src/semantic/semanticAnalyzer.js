@@ -108,7 +108,12 @@ export class AnalizadorSemantico {
                 // Recorrer hijos recursivamente si es un símbolo intermedio sin regla semántica directa
                 if (nodo.hijos) {
                     for (const hijo of nodo.hijos) {
-                        this.analizarSemantica(hijo);
+                        const resultadoHijo = this.analizarSemantica(hijo);
+                        
+                        // Si el hijo calculó un valor (numérico, arreglo, booleano, etc.), lo pasamos hacia arriba
+                        if (resultadoHijo !== undefined && resultadoHijo !== null) {
+                            return resultadoHijo;
+                        }
                     }
                 }
                 break;
@@ -237,49 +242,75 @@ export class AnalizadorSemantico {
         }
     }
 
-    // 8. case 'Asignacion':
+// 8. case 'Asignacion':
     manejarAsignacion(nodo) {
-        // Gramática: Asignacion → <Variable> “:=” <ExpArit>
+        // Gramática: Asignacion → <Variable> “:=” <ExpArit> (o AsignacionDetalle)
         // hijos: 0:<Variable>, 1:":=", 2:<ExpArit>
         const nodoVariable = nodo.hijos[0]; // Variable → id AccesoArreglo
         const nodoExpresion = nodo.hijos[2];
-
+        
         // 1. Obtener los detalles de la variable a la izquierda
         const nombreVar = nodoVariable.hijos[0].token.valor;
         const nodoAcceso = nodoVariable.hijos[1]; // AccesoArreglo → “[” <ExpArit> “]” | ε
 
-        // Validación estructural en la tabla de símbolos
+        // Validación estructural en la tabla de símbolos (¿Existe la variable?)
         if (!this.tablaSimbolos.existe(nombreVar)) {
             this.errores.push(`Error Semántico: La variable '${nombreVar}' no ha sido declarada.`);
             return;
         }
 
-        // 2. Evaluar el valor de la derecha (llamando a la cascada matemática)
-        // El método evaluarExpresion resolverá el AST de ExpArit y devolverá un número real
-        const valorCalculado = this.analizarSemantica(nodoExpresion);
+        // 2. Evaluar el valor de la derecha 
+        let valorCalculado;
+        
+        // Si el nodo de la derecha contiene la constante cadena de texto
+        let nodoAux = nodoExpresion;
+        let esCadenaLiteral = false;
+        let stringEncontrado = "";
+
+        while (nodoAux) {
+            if (nodoAux.token && (nodoAux.token.tipo === 'cC' || nodoAux.token.tipo === 'cteCadena')) {
+                esCadenaLiteral = true;
+                stringEncontrado = nodoAux.token.valor.replace(/["']/g, "");
+                break;
+            }
+            nodoAux = nodoAux.hijos && nodoAux.hijos[0] ? nodoAux.hijos[0] : null;
+        }
+
+        if (esCadenaLiteral) {
+            valorCalculado = stringEncontrado;
+        } else {
+            // Flujo normal matemático para números y expresiones intermedias
+            valorCalculado = this.analizarSemantica(nodoExpresion);
+        }
+
+        console.log(`[Asignacion]: ${nombreVar} := ${valorCalculado}`);
 
         // 3. Verificar si es una asignación escalar o a una celda de un Arreglo
         const esAccesoArray = nodoAcceso && nodoAcceso.hijos && nodoAcceso.hijos.length > 0;
 
+        // Evitar que se asigne un array entero a una variable escalar
+        if (!esAccesoArray && Array.isArray(valorCalculado)) {
+            this.errores.push(`Error de Tipos: No se puede asignar un Arreglo completo a la variable escalar '${nombreVar}'.`);
+            return;
+        }
+
         if (esAccesoArray) {
             // Caso: id[<ExpArit>] := valor
-            // Evaluamos la expresión de adentro de los corchetes para obtener el índice real
             const indice = Math.floor(this.analizarSemantica(nodoAcceso.hijos[1]));
-            
             let arregloEnMemoria = this.tablaEstado.obtenerArreglo(nombreVar);
 
             // Control de límites del array en ejecución
-            if (indice < 0 || indice >= arregloEnMemoria.length) {
+            if (!arregloEnMemoria || indice < 0 || indice >= arregloEnMemoria.length) {
                 this.errores.push(`Error de Ejecución: Índice [${indice}] fuera de rango para el arreglo '${nombreVar}'.`);
                 return;
             }
 
-            // Impactamos el cambio en la celda correspondiente
+            // Impactamos el cambio en la celda correspondiente de forma segura
             arregloEnMemoria[indice] = valorCalculado;
             this.tablaEstado.asignarLiteralArray(nombreVar, arregloEnMemoria);
             console.log(`[tablaEstado]: ${nombreVar}[${indice}] := ${valorCalculado}`);
         } else {
-            // Caso básico: id := valor
+            // Caso básico: id := valor 
             this.tablaEstado.asignarEscalar(nombreVar, valorCalculado);
             console.log(`[tablaEstado]: ${nombreVar} := ${valorCalculado}`);
         }
@@ -301,15 +332,17 @@ export class AnalizadorSemantico {
         const resultadoAcceso = this.manejarAccesoArreglo(nodoAcceso);
 
         if (resultadoAcceso.esAcceso) {
-            // Es un arreglo: buscamos la estructura completa en la tablaEstado
-            const arreglo = this.tablaEstado.get(nombreVar);
-            const indice = resultadoAcceso.indice;
 
-            if (indice < 0 || indice >= arreglo.length) {
+            const indice = resultadoAcceso.indice;
+            const valorCelda = this.tablaEstado.obtenerDesdeArreglo(nombreVar, indice);
+
+            // Si el método devuelve null, significa que el índice estaba fuera de rango
+            if (valorCelda === null) {
                 this.errores.push(`Error de Ejecución: Índice [${indice}] fuera de rango para el arreglo '${nombreVar}'.`);
                 return 0;
             }
-            return arreglo[indice]; // Retornamos el valor real guardado en esa celda
+            
+            return valorCelda; // Retornamos el valor real guardado en esa celda
         } else {
             // Es una variable escalar común: retornamos su valor vivo
             return this.tablaEstado.obtenerEscalar(nombreVar);
@@ -339,12 +372,24 @@ export class AnalizadorSemantico {
         
         // 1. Calculamos el valor del primer término izquierdo
         const valorTermino = this.manejarTermino(nodo.hijos[0]);
+        console.log(`[ExpArit]: Valor del término izquierdo -> ${valorTermino}`);
+
+        //Si el término izquierdo ya es un texto, escapamos de la cascada aritmética
+        if (typeof valorTermino === 'string') {
+            return valorTermino;
+        }
+
+        // Si no hay nodo derecho (ExpArit'), devolvemos el término directo
+        if (!nodo.hijos[1]) {
+            return valorTermino;
+        }
 
         // 2. Le pasamos ese valor al No Terminal prima para que sume/reste lo que quede a la derecha
-        return this.manejarExpAritPrima(nodo.hijos[1], valorTermino);
+        const total = this.manejarExpAritPrima(nodo.hijos[1], valorTermino);
+        console.log(`[ExpArit]: total -> ${total}`);
+        return total;
     }
 
-    // 12. case "ExpArit'":
     manejarExpAritPrima(nodo, acumulado) {
         // Gramática: ExpArit' → “+” <Termino> <ExpArit'> | “-” <Termino> <ExpArit'> | ε
         if (!nodo.hijos || nodo.hijos.length === 0) {
@@ -354,6 +399,13 @@ export class AnalizadorSemantico {
         // hijos: 0: "+" o "-", 1:<Termino>, 2:<ExpArit'>
         const operador = nodo.hijos[0].token.valor;
         const valorSiguienteTermino = this.manejarTermino(nodo.hijos[1]);
+
+        //Validar que ninguna de las dos partes sea un Array 
+        if (Array.isArray(acumulado) || Array.isArray(valorSiguienteTermino)) {
+            this.errores.push(`Error Semántico: Operación aritmética inválida. No se permite sumar o restar utilizando un arreglo completo.`);
+            // Retornamos el acumulado actual para que el compilador pueda seguir analizando el resto del código 
+            return Array.isArray(acumulado) ? 0 : acumulado; 
+        }
 
         let nuevoAcumulado = acumulado;
         if (operador === '+') {
@@ -373,6 +425,7 @@ export class AnalizadorSemantico {
         
         // 1. Resolvemos el factor de la izquierda
         const valorFactor = this.manejarFactor(nodo.hijos[0]);
+        console.log(`[Termino]: Valor del factor izquierdo -> ${valorFactor}`);
 
         // 2. Le arrastramos ese valor al No Terminal prima para multiplicar o dividir
         return this.manejarTerminoPrima(nodo.hijos[1], valorFactor);
@@ -452,6 +505,8 @@ export class AnalizadorSemantico {
 
         // Caso 3: "cteReal" -> hijos: 0:cteReal (Hojo terminal constante numérica)
         if (primerHijo.simbolo === 'cteReal') {
+            console.log(`[Potencia]: Evaluando cteReal -> ${primerHijo.token.valor}`);
+            console.log(parseFloat(primerHijo.token.valor));
             return parseFloat(primerHijo.token.valor);
         }
 
@@ -550,23 +605,67 @@ export class AnalizadorSemantico {
         console.log(`[ Write]: ${mensajeFinal}`);
     }
 
-    // 23. case 'ListaEscritura':
+// 23. case 'ListaEscritura':
     manejarListaEscritura(nodo) {
         // Gramática: ListaEscritura → "cteCadena" <ListaCadena> | <ExpArit> <ListaCadena>
         // hijos: 0: cteCadena o <ExpArit>, 1:<ListaCadena>
         const primerHijo = nodo.hijos[0];
         let textoActual = "";
 
-        if (primerHijo.simbolo === 'cteCadena') {
-            // Si es un string literal (ej: "El resultado es: ") le quitamos las comillas del lexema
-            textoActual = primerHijo.token.valor.replace(/["']/g, "");
-        } else {
-            // Si es una expresión aritmética (<ExpArit>), la evaluamos contra la tablaEstado para obtener su número real
-            textoActual = this.manejarExpArit(primerHijo).toString();
+        try {
+            // 1. Intentamos ver si es una constante de cadena literal directo
+            if (primerHijo.token && (primerHijo.token.tipo === 'cC' || primerHijo.token.tipo === 'cteCadena')) {
+                textoActual = primerHijo.token.valor.replace(/["']/g, "");
+            } else {
+                // 2. Intentamos evaluarlo como expresión aritmética normal
+                const resultadoExp = this.manejarExpArit(primerHijo);
+                
+                if (resultadoExp !== undefined && resultadoExp !== null) {
+                    textoActual = resultadoExp.toString();
+                } else {
+                    // Si devolvió undefined, forzamos la extracción del identificador
+                    throw new Error("Fallback a variable");
+                }
+            }
+        } catch (error) {
+            // Si explotó la cascada aritmética, desenvolvemos el nodo manualmente buscando el ID
+            let nodoAux = primerHijo;
+            let nombreVar = null;
+
+            // Buscamos cualquier token que tenga el valor del identificador recorriendo los hijos
+            while (nodoAux) {
+                if (nodoAux.token && (nodoAux.token.tipo === 'id' || nodoAux.token.valor)) {
+                    nombreVar = nodoAux.token.valor;
+                    break;
+                }
+                nodoAux = nodoAux.hijos && nodoAux.hijos[0] ? nodoAux.hijos[0] : null;
+            }
+
+            if (nombreVar) {
+                const valorEnMemoria = this.tablaEstado.obtenerEscalar(nombreVar);
+                textoActual = (valorEnMemoria !== undefined && valorEnMemoria !== null) 
+                    ? valorEnMemoria.toString() 
+                    : nombreVar;
+            } else {
+                textoActual = "undefined";
+            }
         }
 
         // Le pasamos el texto actual al No Terminal prima para que concatene lo que quede a la derecha
         return this.manejarListaCadena(nodo.hijos[1], textoActual);
+    }
+
+    _extraerNombreVar(nodoExp) {
+        try {
+            // Navega la cascada ExpArit -> Termino -> Factor -> Potencia -> Variable -> id
+            let aux = nodoExp;
+            while (aux && aux.simbolo !== 'id' && aux.hijos && aux.hijos[0]) {
+                aux = aux.hijos[0];
+            }
+            return aux && aux.simbolo === 'id' ? aux.token.valor : null;
+        } catch (e) {
+            return null;
+        }
     }
 
     // 24. case 'ListaCadena':
@@ -650,10 +749,9 @@ export class AnalizadorSemantico {
         const nodoSecuencia = nodo.hijos[5];
 
         // 1. Conseguimos el nombre de la variable de control (ej: en 'i := 1', extraemos 'i')
-        // Asignacion -> Variable := AsignacionDetalle -> Variable -> id AccesoArreglo
         const nombreVarControl = nodoAsignacion.hijos[0].hijos[0].token.valor;
 
-        console.log(`[iterprete]: inicializando bucle FOR con variable '${nombreVarControl}'...`);
+        console.log(`[interprete]: inicializando bucle FOR con variable '${nombreVarControl}'...`);
 
         // 2. Ejecutamos la asignación inicial (impacta el valor inicial en la tablaEstado)
         this.manejarAsignacion(nodoAsignacion);
@@ -662,17 +760,17 @@ export class AnalizadorSemantico {
         const valorLimite = this.manejarExpArit(nodoExpLimite);
 
         // 4. Corremos el ciclo iterando dinámicamente sobre la tablaEstado
-        while (this.tablaEstado.get(nombreVarControl) <= valorLimite) {
+        while (this.tablaEstado.obtenerEscalar(nombreVarControl) <= valorLimite) {
             
             // Ejecutamos el cuerpo interno del bucle
             this.analizarSemantica(nodoSecuencia);
 
             // Incrementamos la variable de control directamente en la memoria 
-            const valorActual = this.tablaEstado.get(nombreVarControl);
-            this.tablaEstado.set(nombreVarControl, valorActual + 1);
+            const valorActual = this.tablaEstado.obtenerEscalar(nombreVarControl);
+            this.tablaEstado.asignarEscalar(nombreVarControl, valorActual + 1);
         }
         
-        console.log(`Bucle FOR finalizado. Variable '${nombreVarControl}' llegó a: ${this.tablaEstado.get(nombreVarControl)}`);
+        console.log(`Bucle FOR finalizado. Variable '${nombreVarControl}' llegó a: ${this.tablaEstado.obtenerEscalar(nombreVarControl)}`);
     }
 
     // 29. case 'Condicion':

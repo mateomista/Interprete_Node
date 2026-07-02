@@ -28,12 +28,12 @@ export function esConstanteCadena(fuente, pos) {
                 estadoActual = Delta[estadoActual][0]; // Volvemos al estado de aceptación
                 i++; // Avanzamos para salir de la cadena
                 return {
-                    token: new Token('cC', lexema),
+                    token: new Token('cteCadena', lexema),
                     nuevaPos: i
                 };
             } else {
-                let categoriaCaracter = categoriaCaracter(fuente[i]);
-                estadoActual = Delta[estadoActual][categoriaCaracter + 1]; // +1 porque el primer estado es para el carácter de apertura
+                let categoria = categoriaCaracter(fuente[i]);
+                estadoActual = Delta[estadoActual][categoria + 1]; // +1 porque el primer estado es para el carácter de apertura
                 lexema += fuente[i];
                 i++;
             }

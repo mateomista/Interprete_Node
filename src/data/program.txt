@@ -1,20 +1,11 @@
-Program testErrores; 
+Program testCadenasYSalida;
 
-var1 : Real;
-var2 : Real;
-var3 : Real[3];
+mensaje : Real; 
+resultado : Real;
 
 {
-    var1 := 10.5;
-    var2 := var1 + 5.0;
+    mensaje := "El factorial calculado es:";
+    resultado := 24.0;
 
-    var3[0] := 1.1;
-    var3[1] := var2;
-
-    var1 := 2.0;
-    var3[var1] := 99.9; 
-
-    noExiste := 5.0;
-
-    var3[5] := 42.0;
+    Write(mensaje, resultado);
 }
