@@ -400,7 +400,7 @@ export class AnalizadorSemantico {
         const operador = nodo.hijos[0].token.valor;
         const valorSiguienteTermino = this.manejarTermino(nodo.hijos[1]);
 
-        //Validar que ninguna de las dos partes sea un Array 
+        // Validar que ninguna de las dos partes sea un Array 
         if (Array.isArray(acumulado) || Array.isArray(valorSiguienteTermino)) {
             this.errores.push(`Error Semántico: Operación aritmética inválida. No se permite sumar o restar utilizando un arreglo completo.`);
             // Retornamos el acumulado actual para que el compilador pueda seguir analizando el resto del código 
@@ -408,13 +408,18 @@ export class AnalizadorSemantico {
         }
 
         let nuevoAcumulado = acumulado;
+
         if (operador === '+') {
-            nuevoAcumulado += valorSiguienteTermino;
+            if (typeof acumulado === 'string' || typeof valorSiguienteTermino === 'string') {
+                console.log(`[Semantico]: Concatenando cadenas -> "${acumulado}" + "${valorSiguienteTermino}"`);
+                nuevoAcumulado = acumulado.toString() + valorSiguienteTermino.toString();
+            } else {
+                nuevoAcumulado = acumulado + valorSiguienteTermino;
+            }
         } else if (operador === '-') {
             nuevoAcumulado -= valorSiguienteTermino;
         }
 
-        // Continuamos resolviendo de forma recursiva hacia la derecha
         return this.manejarExpAritPrima(nodo.hijos[2], nuevoAcumulado);
     }
 
@@ -696,7 +701,7 @@ export class AnalizadorSemantico {
         const condicionVerdadera = this.manejarCondicion(nodoCondicion);
 
         if (condicionVerdadera) {
-            console.log("[🔄 Intérprete]: Condición IF evaluada como VERDADERA. Ejecutando bloque...");
+            console.log("[Intérprete]: Condición IF evaluada como VERDADERA. Ejecutando bloque...");
             this.analizarSemantica(nodoSecuenciaIf);
         } else {
             // Si la condición es falsa, le delegamos al No Terminal Prima decidir si hay un bloque 'else'
@@ -737,7 +742,7 @@ export class AnalizadorSemantico {
                 break;
             }
         }
-        console.log("[🔄 Intérprete]: Saliendo del bucle WHILE.");
+        console.log("[Intérprete]: Saliendo del bucle WHILE.");
     }
 
     // 28. case 'For':
@@ -867,7 +872,7 @@ export class AnalizadorSemantico {
                 case '>':  return valorIzquierdo > valorDerecho;
                 case '<=': return valorIzquierdo <= valorDerecho;
                 case '>=': return valorIzquierdo >= valorDerecho;
-                case '==': return valorIzquierdo === valorDerecho;
+                case '=': return valorIzquierdo === valorDerecho;
                 case '!=': return valorIzquierdo !== valorDerecho;
                 default:
                     this.errores.push(`Error de Ejecución: Operador relacional '${operador}' no reconocido.`);
@@ -895,10 +900,9 @@ if (arbol && arbol.root) {
     analizadorSemantico.analizarSemantica(arbol.root);
 
     console.log("\n=========================================");
-    console.log("📢  --- RESULTADOS DEL ANÁLISIS SEMÁNTICO ---");
+    console.log("--- RESULTADOS DEL ANÁLIsIS SEMÁNTICO ---");
     console.log("=========================================");
 
-    analizadorSemantico.tablaSimbolos.imprimir(); 
     analizadorSemantico.tablaEstado.imprimir();
     
     if (analizadorSemantico.errores && analizadorSemantico.errores.length > 0) {
@@ -906,10 +910,7 @@ if (arbol && arbol.root) {
         analizadorSemantico.reportarErrores();
     } else {
         console.log("¡Análisis semántico e intérprete ejecutados con éxito! Cero errores.");
-        
-        // 2. ¡Llamamos al método que creamos en tu TablaEstado para ver la memoria viva!
-        analizadorSemantico.tablaEstado.imprimirEstado();
     }
 } else {
-    console.log("\n❌ [Parser]: El análisis sintáctico falló. No se pudo generar el AST para el evaluador semántico.");
+    console.log("\n[Parser]: El análisis sintáctico falló. No se pudo generar el AST para el evaluador semántico.");
 }

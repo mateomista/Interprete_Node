@@ -60,7 +60,7 @@ export class AnalizadorLexico {
         this.#tablaDeSimbolos.agregar(resultado.token);
         i = resultado.nuevaPos;
       } else {
-        throw new Error(`Error léxico en la posición ${i}: '${this.#fuente[i]}' no es un token válido.`);
+        throw new Error(`Error léxico en la posición ${i}: ${this.#fuente[i]} no es un token válido.`);
       }
     }
 

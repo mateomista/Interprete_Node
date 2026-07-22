@@ -1,11 +1,42 @@
-Program testCadenasYSalida;
+Program test;
 
-mensaje : Real; 
-resultado : Real;
+arreglo : Real[6];
+promedio : Real;
+sumatoria : Real;
+desviacion : Real;
+i : Real;
+limite : Real;
+
 
 {
-    mensaje := "El factorial calculado es:";
-    resultado := 24.0;
+    arreglo[0] := 1;
+    arreglo[1] := 4;
+    arreglo[2] := 3;
+    arreglo[3] := 6;
+    arreglo[4] := 8;
+    arreglo[5] := 2;
 
-    Write(mensaje, resultado);
+    desviacion := 0;
+    promedio := 0;
+    limite := 5;
+
+    for i := 0 : limite {
+        sumatoria := arreglo[i] + sumatoria;
+
+    };
+
+    promedio := sumatoria/(limite + 1);
+
+    sumatoria := 0;
+
+    for i := 0 : limite {
+
+        sumatoria := sumatoria + (arreglo[i] - promedio)^2;
+    };
+
+    desviacion := sumatoria^(1/2);
+
+    Write("El promedio es", promedio);
+    Write("La desviacion es:", desviacion);
+
 }

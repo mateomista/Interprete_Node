@@ -56,14 +56,14 @@ export function esOperadorRelacional(fuente, pos) {
         }; // es un operador mayor
     }
 
-    /*if (fuente[i] === '=') {
+    if (fuente[i] === '=') {
         lexema += fuente[i];
         i++;
         return {
             token: new Token('opRel', lexema),
             nuevaPos: i
         }; // es un operador de igualdad
-    }*/
+    }
 
     return false; // No es un operador relacional
 

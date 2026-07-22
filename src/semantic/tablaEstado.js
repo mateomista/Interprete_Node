@@ -131,7 +131,7 @@ export class TablaEstado {
 
     imprimir() {
         console.log("\n=============================================");
-        console.log("🧠   TABLA DE ESTADO ");
+        console.log("   TABLA DE ESTADO ");
         console.log("=============================================");
         if (!this.memoria || this.memoria.size === 0) {
             console.log("  (Vacía - Memoria sin inicializar)");

@@ -55,7 +55,7 @@ export function esSimboloEspecial(fuente, pos) {
             if (i < longitud && fuente[i] === '=') {
                 lexema += fuente[i];
                 i++;
-                return { token: new Token('opRel', lexema), nuevaPos: i }; // Operador relacional de distinto (!=)
+                return { token: new Token('!=', lexema), nuevaPos: i }; // Operador relacional de distinto (!=)
             } else {
                 return { token: new Token('!', lexema), nuevaPos: i };     // Símbolo NOT lógico solo
             }
