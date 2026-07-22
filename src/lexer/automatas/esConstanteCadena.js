@@ -5,15 +5,11 @@ const Q = { q0: 0, q1: 1, q2: 2, q3: 3 };
 const EstadosFinales = [Q.q3];
 
 const Delta = [
-  /* q0 */ [Q.q2, Q.Err, Q.q1, Q.Err],  // N, ., -, O
-  /* q1 */ [Q.q5, Q.Err, Q.Err, Q.Err],
-  /* q2 */ [Q.q2, Q.q4, Q.Err, Q.Err],
-  /* q3 */ [Q.Err, Q.Err, Q.Err, Q.Err], // estado de error
-  /* q4 */ [Q.q6, Q.Err, Q.Err, Q.Err],
-  /* q5 */ [Q.q5, Q.q4, Q.Err, Q.Err],
-  /* q6 */ [Q.q6, Q.q7, Q.q7, Q.q7],
-  /* q7 */ [Q.q7, Q.q7, Q.q7, Q.q7],
-  /* Err*/ [Q.Err, Q.Err, Q.Err, Q.Err]
+       // para ", letra, numero, otro
+    /* q0 */ [Q.q1, Q.q2, Q.q2, Q.q2], 
+    /* q1 */ [Q.q3, Q.q1, Q.q1, Q.q1], 
+    /* q2 */ [Q.q2, Q.q2, Q.q2, Q.q2], // error
+    /* q3 */ [Q.q3, Q.q3, Q.q3, Q.q3]  // aceptación
 ];
 
 export function esConstanteCadena(fuente, pos) {
@@ -32,12 +28,12 @@ export function esConstanteCadena(fuente, pos) {
                 estadoActual = Delta[estadoActual][0]; // Volvemos al estado de aceptación
                 i++; // Avanzamos para salir de la cadena
                 return {
-                    token: new Token('cC', lexema),
+                    token: new Token('cteCadena', lexema),
                     nuevaPos: i
                 };
             } else {
-                let categoriaCaracter = categoriaCaracter(fuente[i]);
-                estadoActual = Delta[estadoActual][categoriaCaracter + 1]; // +1 porque el primer estado es para el carácter de apertura
+                let categoria = categoriaCaracter(fuente[i]);
+                estadoActual = Delta[estadoActual][categoria + 1]; // +1 porque el primer estado es para el carácter de apertura
                 lexema += fuente[i];
                 i++;
             }

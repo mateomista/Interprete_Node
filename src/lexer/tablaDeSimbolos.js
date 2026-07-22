@@ -10,7 +10,10 @@ const palabrasReservadas = [
   "else",
   "while",
   "do",
-  "for"
+  "for",
+  "Real",
+  "Int",
+  "String"
 ];
 
 export class TablaDeSimbolos {

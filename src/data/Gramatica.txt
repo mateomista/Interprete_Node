@@ -1,0 +1,65 @@
+Programa → “Program” “id” “;” <DeclaracionVar> “{“ <Secuencia> “}”
+
+DeclaracionVar → <Declaracion> <DeclaracionVar> | ε
+
+Declaracion → “id” “:” <Tipo> “;”
+
+Tipo → “Real” <TipoArreglo> 
+TipoArreglo → "[" "cteReal" "]" | ε
+
+Secuencia → <Sentencia> <Secuencia> | ε
+
+Sentencia → <Asignacion> ";" | <Escribir> ";" | <Leer> ";" | <SiEntSino> ";" | <While> ";" | <For> ";"
+
+Asignacion → <Variable> “:=” <ExpArit>  
+
+Variable → “id” <AccesoArreglo>
+
+AccesoArreglo → “[” <ExpArit> “]” | ε       
+
+ExpArit → <Termino> <ExpArit'>
+
+ExpArit' → “+” <Termino> <ExpArit'> | “-” <Termino> <ExpArit'> | ε
+
+Termino → <Factor>  <Termino'>
+
+Termino' → “*” <Factor> <Termino'> | “/” <Factor> <Termino'> | ε
+
+Factor → <Potencia> <Factor'>
+
+Factor' → “^” <Potencia> <Factor'> | ε
+
+<Potencia> → "(" <ExpArit> ")" | <Variable> | "cteReal" | <LiteralArray> | "-" <Potencia>
+
+LiteralArray → “[“ <ListaElementos> “]”
+
+ListaElementos → <ExpArit> <ListaElementosPrima>
+
+ListaElementosPrima → “,” <ExpArit> <ListaElementosPrima> | ε 
+
+Leer → “Read” “(“ <Variable> “)”                                   
+
+Escribir → “Write” “(“ <ListaEscritura> “)”
+
+<ListaEscritura> → "cteCadena" <ListaCadena> | <ExpArit> <ListaCadena>
+
+ListaCadena →  “,” <ListaEscritura> | ε
+
+SiEntSino → “if” <Condicion> “then” “{“ <Secuencia> “}” <SiEntSino'>
+
+SiEntSino' → “else” “{“ <Secuencia> “}” | ε
+
+While → “while” <Condicion> “do” “{“ <Secuencia> “}”
+
+For → “for” <Asignacion> “:” <ExpArit> “{“ <Secuencia> “}”
+
+Condicion → <TerminoLogico> <CondicionPrima>
+
+CondicionPrima → “|” <TerminoLogico> <CondicionPrima> | ε
+
+TerminoLogico → <FactorLogico> <TerminoLogicoPrima>
+
+TerminoLogicoPrima → “&” <FactorLogico> <TerminoLogicoPrima> | ε
+
+FactorLogico → "!" <FactorLogico> | "{" <Condicion> "}" | <ExpArit> "opRel" <ExpArit>
+
