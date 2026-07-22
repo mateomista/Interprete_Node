@@ -17,7 +17,7 @@ export function esOperadorRelacional(fuente, pos) {
             lexema += fuente[i];
             i++;
             return {
-                token: new token('opRel', lexema),
+                token: new Token('opRel', lexema),
                 nuevaPos: i
             }; // es un operador menor o igual
         }

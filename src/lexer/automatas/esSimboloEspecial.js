@@ -14,28 +14,28 @@ export function esSimboloEspecial(fuente, pos) {
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('suma', lexema),
+                token: new Token('+', lexema),
                 nuevaPos: i
             };
         case '^':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('potencia', lexema),
+                token: new Token('^', lexema),
                 nuevaPos: i
             };
         case '-':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('resta', lexema),
+                token: new Token('-', lexema),
                 nuevaPos: i
             };
         case '*':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('multiplicacion', lexema),
+                token: new Token('*', lexema),
                 nuevaPos: i
             };
         case ':':
@@ -44,90 +44,90 @@ export function esSimboloEspecial(fuente, pos) {
             if (i < longitud && fuente[i] === '=') {
                 lexema += fuente[i];
                 i++;
-                return {
-                    token: new Token('asignacion', lexema),
-                    nuevaPos: i
-                };
+                return { token: new Token(':=', lexema), nuevaPos: i }; // Operador asignación
             } else {
-                return false; // No es un símbolo especial reconocido
+                return { token: new Token(':', lexema), nuevaPos: i };  // Separador de tipos
             }
-
+                
         case '!':
             lexema += fuente[i];
             i++;
             if (i < longitud && fuente[i] === '=') {
                 lexema += fuente[i];
                 i++;
-                return {
-                    token: new Token('negacion', lexema),
-                    nuevaPos: i
-                }; // es negacion
+                return { token: new Token('!=', lexema), nuevaPos: i }; // Operador relacional de distinto (!=)
             } else {
-                return false; // No es un símbolo especial reconocido
+                return { token: new Token('!', lexema), nuevaPos: i };     // Símbolo NOT lógico solo
             }
+            
         case '&':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('yLogico',lexema),
+                token: new Token('&',lexema),
                 nuevaPos: i
             }
         case '|':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('oLogico', lexema),
+                token: new Token('|', lexema),
                 nuevaPos: i
             };
         case '/':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('division', lexema),
+                token: new Token('/', lexema),
                 nuevaPos: i
             };
         case ';':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('sE', lexema), // sE para simbolo especial
+                token: new Token(';', lexema), // sE para simbolo especial
                 nuevaPos: i
             };
         case ',':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('coma', lexema),
+                token: new Token(',', lexema),
                 nuevaPos: i
             };
         case '(':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('parAbre', lexema),
+                token: new Token('(', lexema),
                 nuevaPos: i
             };
         case ')':
             lexema += fuente[i];
             i++;
             return {
-                token: new Token('parCierra', lexema),
+                token: new Token(')', lexema),
                 nuevaPos: i
             };
         case '{':
             lexema += fuente[i];
             i++;
-            return {
-                token: new Token('llaveAbre', lexema),
-                nuevaPos: i
-            };
+            return { token: new Token('{', lexema), nuevaPos: i };
+
         case '}':
             lexema += fuente[i];
             i++;
-            return {
-                token: new Token('llaveCierra', lexema),
-                nuevaPos: i
-            };
+            return { token: new Token('}', lexema), nuevaPos: i };
+        case '[':
+            lexema += fuente[i];
+            i++;
+            return { token: new Token('[', lexema), nuevaPos: i };
+
+        case ']':
+            lexema += fuente[i];
+            i++;
+            return { token: new Token(']', lexema), nuevaPos: i };
+
         default:
             return false; // No es un símbolo especial reconocido
     }

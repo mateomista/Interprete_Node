@@ -4,7 +4,7 @@ import { Token } from './token.js';
 import { esEspacioOControl } from './utils.js';
 import fs from 'node:fs';
 
-const filePath = './src/data/program.txt';
+const filePath = '../data/program.txt';
 
 function cargarFuente() {
     try {
@@ -60,12 +60,12 @@ export class AnalizadorLexico {
         this.#tablaDeSimbolos.agregar(resultado.token);
         i = resultado.nuevaPos;
       } else {
-        throw new Error(`Error léxico en la posición ${i}: '${this.#fuente[i]}' no es un token válido.`);
+        throw new Error(`Error léxico en la posición ${i}: ${this.#fuente[i]} no es un token válido.`);
       }
     }
 
     // Token fin de archivo
-    this.#tablaDeSimbolos.agregar(new Token('$', 'fin de archivo'));
+    this.#tablaDeSimbolos.agregar(new Token('$', '$'));
   }
 
   primerToken() {
@@ -82,7 +82,6 @@ export class AnalizadorLexico {
 
 
   getTablaDeSimbolos() {
-    // Si quieres exponer la tabla completa (cuidado con la mutabilidad)
     return this.#tablaDeSimbolos;
   }
 }
